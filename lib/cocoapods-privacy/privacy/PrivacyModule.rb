@@ -3,9 +3,9 @@ require 'cocoapods-core/specification/dsl/attribute_support'
 require 'cocoapods-core/specification/dsl/attribute'
 require 'xcodeproj'
 
-KSource_Files_Key = 'source_files' #不存在单数 source_file
-KExclude_Files_Key = 'exclude_files' #不存在单数 exclude_file
-KResource_Bundle_Key = 'resource_bundle' #resource_bundle 和 resource_bundles 这两个参数本质上是一样的，resource_bundle 也能指向多个参数
+KSource_Files_Key = 'source_files' # Singular form does not exist for source_file
+KExclude_Files_Key = 'exclude_files' # Singular form does not exist for exclude_file
+KResource_Bundle_Key = 'resource_bundle' # Both resource_bundle and resource_bundles essentially refer to the same parameters, and resource_bundle can also point to multiple parameters
 
 class BBRow
   attr_accessor  :content, :is_comment, :is_spec_start, :is_spec_end, :key, :value
@@ -20,7 +20,7 @@ class BBRow
   end
 
   def parse_key_value
-    # 在这里添加提取 key 和 value 的逻辑
+    # Add logic here to extract key and value
     if @content.include?('=')
       key_value_split = @content.split('=')
       @key = key_value_split[0]
@@ -35,7 +35,7 @@ end
 class BBSpec
   attr_accessor :name, :alias_name, :full_name, :parent, :rows, :privacy_sources_files, :privacy_exclude_files, :privacy_file
 
-  def initialize(name,alias_name,full_name)
+  def initialize(name, alias_name, full_name)
     @rows = []
     @name = name
     @alias_name = alias_name
@@ -52,7 +52,7 @@ class BBSpec
       end
     end
 
-    #判断names 中是否包含 name，如果包含，那么给name 添加一个 “.diff” 后缀，一直到names 中没有包含name为止
+    # Check if names contain name, if so, add a ".diff" suffix to name until name is not included in names
     while names.include?(name)
       name = "#{name}.diff"
     end
@@ -60,9 +60,9 @@ class BBSpec
     "#{@full_name}.#{name}"
   end
 
-  # 单独属性转成spec字符串，方便解析
+  # Convert singular properties to spec strings for easy parsing
   def assemble_single_property_to_complex(property_name)
-    property_name += "s" if property_name == KResource_Bundle_Key #检测到单数resource_bundle,直接转成复数，功能一致
+    property_name += "s" if property_name == KResource_Bundle_Key # If a singular resource_bundle is detected, convert it directly to a plural one with the same functionality
     property_name
   end
 
@@ -82,16 +82,16 @@ class BBSpec
     modify_privacy_resource_bundle_if_need(podspec_file_path)
   end
 
-  # 对应Spec新增隐私文件
+  # Create privacy file corresponding to Spec if needed
   def create_privacy_file_if_need(podspec_file_path)
     if @source_files_index
       PrivacyUtils.create_privacy_if_empty(File.join(File.dirname(podspec_file_path), @privacy_file))
     end
   end
 
-  # 这里处理所有多行参数的解析，目前处理 source_files\exclude_files\resource_bundle 这三种
-  # 输入格式 ['.source_files':false,'.exclude_files':true......] => true 代表会根据获取的重置属性，需要把多行多余的进行删除
-  # 返回格式 {'.source_files':BBRow,......}
+  # Parse all multiline parameters, currently handling source_files, exclude_files, and resource_bundle
+  # Input format ['.source_files':false,'.exclude_files':true......] => true indicates that excess multiline content needs to be deleted based on the acquired reset properties
+  # Return format {'.source_files':BBRow,......}
   def fetch_mul_line_property(propertys_mul_line_hash)
     property_hash = {}
     line_processing = nil
@@ -101,7 +101,7 @@ class BBSpec
         next
       end
 
-      property_find = propertys_mul_line_hash.find { |key, _| line.key && line.key.include?(key) } #查找不到返回nil 查到返回数组，key， value 分别在第一和第二个参数
+      property_find = propertys_mul_line_hash.find { |key, _| line.key && line.key.include?(key) } # Returns nil if not found, returns an array if found, where key and value are in the first and second parameters respectively
       if property_find
         property_config_processing = property_find 
       end
@@ -116,7 +116,7 @@ class BBSpec
             code = "#{line.value}"
           end
 
-          # 清除 content 和 value, 后面会把所有的content 组装起来，多余的内容要清除，避免重复
+          # Clear content and value, all content will be assembled later, excess content needs to be cleared to avoid duplication
           if is_replace_line
             line.content = ''
             line.value = nil
@@ -131,7 +131,7 @@ class BBSpec
           unless line_processing
             line_processing = line
           end
-          line_processing.value = code if line_processing #存储当前残缺的value,和后面完整的进行拼接
+          line_processing.value = code if line_processing # Store the current incomplete value and concatenate it with the complete one later
           next
         end
 
@@ -146,8 +146,8 @@ class BBSpec
     property_hash
   end
 
-  # 处理字符串或者数组，使其全都转为数组，并转成实际文件夹地址
-  def handle_string_or_array_files(podspec_file_path,line)
+  # Handle strings or arrays, convert them all to arrays, and convert them to actual folder addresses
+  def handle_string_or_array_files(podspec_file_path, line)
     value = line.value
     if value.is_a?(String) && !value.empty?
       array = [value]
@@ -163,31 +163,31 @@ class BBSpec
     files
   end
 
-  # 把新增的隐私文件 映射给 podspec  && 解析 privacy_sources_files && 解析 privacy_exclude_files
+  # Map newly added privacy files to podspec and parse privacy_sources_files and privacy_exclude_files
   def modify_privacy_resource_bundle_if_need(podspec_file_path)
     if @source_files_index
       privacy_resource_bundle = { "#{full_name}.privacy" => @privacy_file }
 
-      # 这里处理所有多行参数的解析，目前处理 source_files\exclude_files\resource_bundle 这三种
+      # Parse all multiline parameters here, currently handling source_files, exclude_files, resource_bundle
       propertys_mul_line_hash = {}
       propertys_mul_line_hash[KSource_Files_Key] = false
       propertys_mul_line_hash[KExclude_Files_Key] = false
       if @has_resource_bundle
-        propertys_mul_line_hash[KResource_Bundle_Key] = true #需要根据生成的重置属性
-      else # 如果原先没有resource_bundle，需要单独加一行resource_bundle
+        propertys_mul_line_hash[KResource_Bundle_Key] = true # Requires generation of reset properties
+      else # If there was no original resource_bundle, a separate resource_bundle line needs to be added
         space = PrivacyUtils.count_spaces_before_first_character(rows[@source_files_index].content)
         line = "#{alias_name}.resource_bundle = #{privacy_resource_bundle}"
-        line = PrivacyUtils.add_spaces_to_string(line,space)
+        line = PrivacyUtils.add_spaces_to_string(line, space)
         row = BBRow.new(line)
         @rows.insert(@source_files_index+1, row)
       end
       property_value_hash = fetch_mul_line_property(propertys_mul_line_hash)
       property_value_hash.each do |property, line|
-        if property == KSource_Files_Key                 #处理 source_files
-          @privacy_sources_files = handle_string_or_array_files(podspec_file_path,line)
-        elsif property == KExclude_Files_Key             #处理 exclude_files
-          @privacy_exclude_files = handle_string_or_array_files(podspec_file_path,line)
-        elsif property == KResource_Bundle_Key           #处理 原有resource_bundle 合并隐私清单文件映射
+        if property == KSource_Files_Key                 # Handle source_files
+          @privacy_sources_files = handle_string_or_array_files(podspec_file_path, line)
+        elsif property == KExclude_Files_Key             # Handle exclude_files
+          @privacy_exclude_files = handle_string_or_array_files(podspec_file_path, line)
+        elsif property == KResource_Bundle_Key           # Handle original resource_bundle and merge privacy manifest file mapping
           merged_resource_bundle = line.value.merge(privacy_resource_bundle)
           @resource_bundle = merged_resource_bundle
           line.value = merged_resource_bundle
@@ -203,48 +203,46 @@ module PrivacyModule
 
   public
 
-  # 处理工程
-  def self.load_project(folds,exclude_folds)
+  # Process project
+  def self.load_project(folds, exclude_folds)
     project_path = PrivacyUtils.project_path()
     resources_folder_path = File.join(File.basename(project_path, File.extname(project_path)),'Resources')
-    privacy_file_path = File.join(resources_folder_path,PrivacyUtils.privacy_name)
-    # 如果隐私文件不存在，创建隐私协议模版
+    privacy_file_path = File.join(resources_folder_path, PrivacyUtils.privacy_name)
+    # If privacy file does not exist, create a privacy protocol template
     unless File.exist?(privacy_file_path) 
       PrivacyUtils.create_privacy_if_empty(privacy_file_path)
     end
     
-    # 如果没有隐私文件，那么新建一个添加到工程中
-    # 打开 Xcode 项目，在Resources 下创建
+    # If there is no privacy file, create one and add it to the project
+    # Open the Xcode project, create it under Resources
     project = Xcodeproj::Project.open(File.basename(project_path))
     main_group = project.main_group
-    resources_group = main_group.find_subpath('Resources',false)
+    resources_group = main_group.find_subpath('Resources', false)
     if resources_group.nil?
-      resources_group = main_group.new_group('Resources',resources_folder_path)
+      resources_group = main_group.new_group('Resources', resources_folder_path)
     end
 
-    # 如果不存在引用，创建新的引入xcode引用
+    # If there is no reference, create a new Xcode reference
     if resources_group.find_file_by_path(PrivacyUtils.privacy_name).nil?
-      privacy_file_ref = resources_group.new_reference(PrivacyUtils.privacy_name,:group)
+      privacy_file_ref = resources_group.new_reference(PrivacyUtils.privacy_name, :group)
       privacy_file_ref.last_known_file_type = 'text.xml'
       target = project.targets.first
       resources_build_phase = target.resources_build_phase
-      resources_build_phase.add_file_reference(privacy_file_ref) # 将文件引用添加到 resources 构建阶段中
-      # target.add_file_references([privacy_file_ref]) # 将文件引用添加到 target 中
-      # resources_group.new_file(privacy_file_path)
+      resources_build_phase.add_file_reference(privacy_file_ref) # Add file reference to resources build phase
     end
     
     project.save
 
-    # 开始检索api,并返回json 字符串数据
+    # Start searching for APIs and return JSON string data
     PrivacyLog.clean_result_log()
-    json_data = PrivacyHunter.search_pricacy_apis(folds,exclude_folds)
+    json_data = PrivacyHunter.search_pricacy_apis(folds, exclude_folds)
 
-    # 将数据写入隐私清单文件
-    PrivacyHunter.write_to_privacy(json_data,privacy_file_path)
+    # Write data to privacy manifest file
+    PrivacyHunter.write_to_privacy(json_data, privacy_file_path)
     PrivacyLog.result_log_tip()
   end
 
-  # 处理组件
+  # Process module
   def self.load_module(podspec_file_path)
     puts "👇👇👇👇👇👇 Start analysis component privacy 👇👇👇👇👇👇"
     PrivacyLog.clean_result_log()
@@ -253,39 +251,38 @@ module PrivacyModule
       PrivacyLog.write_to_result_log("#{privacy_file_path}: \n")
       source_files = hash[KSource_Files_Key]
       exclude_files = hash[KExclude_Files_Key]
-      data = PrivacyHunter.search_pricacy_apis(source_files,exclude_files)
-      PrivacyHunter.write_to_privacy(data,privacy_file_path) unless data.empty?
+      data = PrivacyHunter.search_pricacy_apis(source_files, exclude_files)
+      PrivacyHunter.write_to_privacy(data, privacy_file_path) unless data.empty?
     end
     PrivacyLog.result_log_tip()
     puts "👆👆👆👆👆👆 End analysis component privacy 👆👆👆👆👆👆"
   end
 
   def self.check(podspec_file_path)
-      # Step 1: 读取podspec
+      # Step 1: Read podspec
       lines = read_podspec(podspec_file_path)
       
-      # Step 2: 逐行解析并转位BBRow 模型
+      # Step 2: Parse line by line and convert to BBRow model
       rows = parse_row(lines)
 
-      # Step 3.1:如果Row 是属于Spec 内，那么聚拢成BBSpec，
-      # Step 3.2:BBSpec 内使用数组存储其Spec 内的行
-      # Step 3.3 在合适位置给每个有效的spec都创建一个 隐私模版，并修改其podspec 引用
-      combin_sepcs_and_rows = combin_sepc_if_need(rows,podspec_file_path)
+      # Step 3.1: If Row belongs to Spec, gather them into BBSpec,
+      # Step 3.2: Store rows inside BBSpec using arrays
+      # Step 3.3: Create a privacy template for each valid spec and modify its podspec reference
+      combin_sepcs_and_rows = combin_sepc_if_need(rows, podspec_file_path)
 
-      # Step 4: 展开修改后的Spec,重新转换成 BBRow
+      # Step 4: Unfold modified Spec, reconvert to BBRow
       rows = unfold_sepc_if_need(combin_sepcs_and_rows)
 
-      # Step 5: 打开隐私模版，并修改其podspec文件，并逐行写入
+      # Step 5: Open privacy template, modify its podspec file, and write line by line
       File.open(podspec_file_path, 'w') do |file|
-        # 逐行写入 rows
+        # Write rows line by line
         rows.each do |row|
           file.puts(row.content)
         end
       end
 
-     
-      # Step 6: 获取privacy 相关信息，传递给后续处理
-      privacy_hash = fetch_privacy_hash(combin_sepcs_and_rows,podspec_file_path).compact
+      # Step 6: Get privacy related information and pass it to subsequent processing
+      privacy_hash = fetch_privacy_hash(combin_sepcs_and_rows, podspec_file_path).compact
       filtered_privacy_hash = privacy_hash.reject { |_, value| value.empty? }
       filtered_privacy_hash
   end
@@ -297,7 +294,7 @@ module PrivacyModule
   
   def self.parse_row(lines)
     rows = []  
-    code_stack = [] #栈，用来排除if end 等对spec 的干扰
+    code_stack = [] # Stack, used to exclude interference from 'if', 'end', etc. on the spec
 
     lines.each do |line|
       content = line.strip
@@ -306,7 +303,7 @@ module PrivacyModule
       is_if = !is_comment && content.start_with?('if')  
       is_end = !is_comment && content.start_with?('end')
 
-      # 排除if end 对spec_end 的干扰
+      # Exclude interference from 'if' and 'end' on spec_end
       code_stack.push('spec') if is_spec_start 
       code_stack.push('if') if is_if 
       stack_last = code_stack.last 
@@ -320,7 +317,7 @@ module PrivacyModule
     rows
   end
 
-  # 数据格式：
+  # Data format:
   # [
   #   BBRow
   #   BBRow
@@ -335,42 +332,42 @@ module PrivacyModule
   #   BBRow
   #   ......  
   # ]
-  # 合并Row -> Spec（会存在部分行不在Spec中：Spec new 之前的注释）
-  def self.combin_sepc_if_need(rows,podspec_file_path) 
+  # Combine Row -> Spec (some lines not in Spec: comments before Spec new)
+  def self.combin_sepc_if_need(rows, podspec_file_path) 
     spec_stack = []
     result_rows = []
     default_name = File.basename(podspec_file_path, File.extname(podspec_file_path))
 
     rows.each do |row|
       if row.is_spec_start 
-        # 获取父spec
+        # Get parent spec
         parent_spec = spec_stack.last 
 
-        # 创建 spec
+        # Create spec
         name = row.content.split("'")[1]&.strip || default_name
         alias_name = row.content.split("|")[1]&.strip
         full_name = parent_spec ? parent_spec.uniq_full_name_in_parent(name) : name
 
-        spec = BBSpec.new(name,alias_name,full_name)
+        spec = BBSpec.new(name, alias_name, full_name)
         spec.rows << row
         spec.parent = parent_spec
 
-        # 当存在 spec 时，存储在 spec.rows 中；不存在时，直接存储在外层
+        # When a spec exists, store it in spec.rows; otherwise, store it directly outside
         (parent_spec ? parent_spec.rows : result_rows ) << spec
   
-        # spec 入栈
+        # Push spec into stack
         spec_stack.push(spec)
       elsif row.is_spec_end
-        # 当前 spec 的 rows 加入当前行
+        # Add current row to current spec's rows
         spec_stack.last&.rows << row
 
-        #执行隐私协议修改
+        # Perform privacy protocol modification
         spec_stack.last.privacy_handle(podspec_file_path)
 
-        # spec 出栈
+        # Pop spec from stack
         spec_stack.pop
       else
-        # 当存在 spec 时，存储在 spec.rows 中；不存在时，直接存储在外层
+        # When a spec exists, store it in spec.rows; otherwise, store it directly outside
         (spec_stack.empty? ? result_rows : spec_stack.last.rows) << row
       end
     end
@@ -378,7 +375,7 @@ module PrivacyModule
     result_rows
   end
 
-  # 把所有的spec中的rows 全部展开，拼接成一级数组【BBRow】
+  # Flatten all rows in specs, concatenate into a one-level array [BBRow]
   def self.unfold_sepc_if_need(rows)
     result_rows = []
     rows.each do |row|
@@ -392,13 +389,13 @@ module PrivacyModule
   end
 
 
-  def self.fetch_privacy_hash(rows,podspec_file_path)
+  def self.fetch_privacy_hash(rows, podspec_file_path)
     privacy_hash = {}
     specs = rows.select { |row| row.is_a?(BBSpec) }
     specs.each do |spec|
-      value = spec.privacy_sources_files ? {KSource_Files_Key => spec.privacy_sources_files,KExclude_Files_Key => spec.privacy_exclude_files || []} : {}
-      privacy_hash[File.join(File.dirname(podspec_file_path),spec.privacy_file)] = value
-      privacy_hash.merge!(fetch_privacy_hash(spec.rows,podspec_file_path))
+      value = spec.privacy_sources_files ? {KSource_Files_Key => spec.privacy_sources_files, KExclude_Files_Key => spec.privacy_exclude_files || []} : {}
+      privacy_hash[File.join(File.dirname(podspec_file_path), spec.privacy_file)] = value
+      privacy_hash.merge!(fetch_privacy_hash(spec.rows, podspec_file_path))
     end
     privacy_hash
   end

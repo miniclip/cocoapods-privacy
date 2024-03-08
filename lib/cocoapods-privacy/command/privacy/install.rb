@@ -1,38 +1,37 @@
 module Pod
-    class Command
-      class Privacy < Command
-        class Install < Privacy
-            self.summary = '在工程中创建对应隐私清单文件'
+  class Command
+    class Privacy < Command
+      class Install < Privacy
+          self.summary = 'Create corresponding privacy manifest files in the project'
 
-            self.description = <<-DESC
-                1、在工程Resources 文件夹下创建隐私清单文件
-                2、搜索对应组件，补全隐私Api部分
-                3、只处理隐私Api部分，隐私权限相关需要自行处理！！！
-            DESC
+          self.description = <<-DESC
+              1. Create privacy manifest files in the Resources folder of the project.
+              2. Search for corresponding components and complete the privacy API sections.
+              3. Only handles the privacy API sections, privacy permissions must be managed separately!!!
+          DESC
 
-            def self.options
-                [
-                  ["--folds=folds", '传入自定义搜索文件夹，多个文件目录使用“,”分割'],
-                ].concat(super)
-            end
+          def self.options
+              [
+                ["--folds=folds", 'Enter custom search folders, use “,” to separate multiple directories'],
+              ].concat(super)
+          end
 
-            def initialize(argv)
-                @folds = argv.option('folds', '').split(',')
-                super
-            end
-    
-            def run
-                verify_podfile_exists!
+          def initialize(argv)
+              @folds = argv.option('folds', '').split(',')
+              super
+          end
+  
+          def run
+              verify_podfile_exists!
 
-                installer = installer_for_config
-                installer.repo_update = false
-                installer.update = false
-                installer.deployment = false
-                installer.clean_install = false
-                installer.privacy_analysis(@folds)
-            end
-        end
+              installer = installer_for_config
+              installer.repo_update = false
+              installer.update = false
+              installer.deployment = false
+              installer.clean_install = false
+              installer.privacy_analysis(@folds)
+          end
       end
     end
   end
-  
+end

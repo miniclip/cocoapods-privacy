@@ -6,37 +6,37 @@ module PrivacyUtils
       'PrivacyInfo.xcprivacy'
     end
     
-    # 通过是否包含podspec 来判断是否为主工程
+    # Determine if it is the main project by whether it contains a podspec
     def self.isMainProject
       !(podspec_file_path && !podspec_file_path.empty?)
     end
 
-    # 查找podspec
+    # Find the podspec file
     def self.podspec_file_path
       base_path = Pathname.pwd
       matching_files = Dir.glob(File.join(base_path, '*.podspec'))
       matching_files.first
     end
 
-    # xcode工程地址
+    # Xcode project path
     def self.project_path
       matching_files = Dir[File.join(Pathname.pwd, '*.xcodeproj')].uniq
       matching_files.first
     end
 
-    # xcode工程主代码目录
+    # Xcode project main code directory
     def self.project_code_fold
       projectPath = project_path
       File.join(Pathname.pwd,File.basename(projectPath, File.extname(projectPath)))
     end
 
-    # 使用正则表达式匹配第一个字符前的空格数量
+    # Use regular expression to match the number of spaces before the first character
     def self.count_spaces_before_first_character(str)
       match = str.match(/\A\s*/)
       match ? match[0].length : 0
     end
 
-    # 使用字符串乘法添加指定数量的空格
+    # Add a specified number of spaces using string multiplication
     def self.add_spaces_to_string(str, num_spaces)
       spaces = ' ' * num_spaces
       "#{spaces}#{str}"
@@ -49,36 +49,36 @@ module PrivacyUtils
     end
 
     def self.cache_privacy_fold
-      # 本地缓存目录
+      # Local cache directory
       cache_directory = File.expand_path('~/.cache')
       
-      # 目标文件夹路径
+      # Target folder path
       target_directory = File.join(cache_directory, 'cocoapods-privacy', 'privacy')
 
-      # 如果文件夹不存在，则创建
+      # Create folder if it does not exist
       FileUtils.mkdir_p(target_directory) unless Dir.exist?(target_directory)
 
       target_directory
     end
 
-    # etag 文件夹
+    # Etag folder
     def self.cache_privacy_etag_fold
       File.join(cache_privacy_fold,'etag')
     end
     
-    # config.json 文件
+    # config.json file
     def self.cache_config_file
       config_file = File.join(cache_privacy_fold, 'config.json')
     end
 
-    # config.json 文件
+    # privacy.log file
     def self.cache_log_file
       config_file = File.join(cache_privacy_fold, 'privacy.log')
     end
 
-    # 创建默认隐私协议文件
+    # Create default privacy protocol file
     def self.create_privacy_if_empty(file_path) 
-      # 文件内容
+      # File content
      file_content = <<~EOS
      <?xml version="1.0" encoding="UTF-8"?>
      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -98,16 +98,16 @@ module PrivacyUtils
    
      isCreate = create_file_and_fold_if_no_exit(file_path,file_content)
      if isCreate
-       puts "【隐私清单】（初始化）存放地址 => #{file_path}"
+       puts "【Privacy List】(Initialized) Storage Location => #{file_path}"
      end
    end
    
-   # 创建文件，并写入默认值，文件路径不存在会自动创建
+   # Create file, write default values, automatically create file path if it does not exist
    def self.create_file_and_fold_if_no_exit(file_path,file_content = nil)
      folder_path = File.dirname(file_path)
      FileUtils.mkdir_p(folder_path) unless File.directory?(folder_path)
    
-     # 创建文件（如果不存在/或为空）
+     # Create file (if it does not exist or is empty)
      if !File.exist?(file_path) || File.zero?(file_path)
        File.open(file_path, 'w') do |file|
          file.write(file_content)
@@ -117,7 +117,7 @@ module PrivacyUtils
      return false
    end
 
-   # 查询group 中是否有执行路径的子group
+   # Check if there is a child group in the group with the specified path
    def self.find_group_by_path(group,path)
      result = nil
      sub_group = group.children

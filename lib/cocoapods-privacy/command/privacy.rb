@@ -8,11 +8,11 @@ module Pod
 
       def run
         if PrivacyUtils.isMainProject
-          puts "检测到#{PrivacyUtils.project_path || ""}工程文件， 请使用 pod privacy install 对工程进行隐私清单创建和自动检索"
+          puts "Detected project file at #{PrivacyUtils.project_path || ""}. Please use 'pod privacy install' to create and automatically retrieve privacy manifests for the project."
         elsif PrivacyUtils.podspec_file_path
-          puts "检测到#{PrivacyUtils.podspec_file_path || ""} 组件， 请使用 pod privacy spec 对组件进行隐私清单创建和自动检索"
+          puts "Detected component at #{PrivacyUtils.podspec_file_path || ""}. Please use 'pod privacy spec' to create and automatically retrieve privacy manifests for the component."
         else
-          puts "未检测到工程或podspec 文件， 请切换到工程或podspec文件目录下再次执行命令"
+          puts "No project or podspec file detected. Please switch to a directory containing a project or a podspec file and retry the command."
         end
       end      
     end

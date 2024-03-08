@@ -6,11 +6,11 @@ require 'cocoapods-privacy/gem_version.rb'
 Gem::Specification.new do |spec|
   spec.name          = 'cocoapods-privacy'
   spec.version       = CocoapodsPrivacy::VERSION
-  spec.authors       = ['youhui']
-  spec.email         = ['developer_yh@163.com']
+  spec.authors       = { 'SDK team' => 'sdk.engineering@miniclip.com' }
+  spec.email         = ['sdk.engineering@miniclip.com']
   spec.description   = %q{A short description of cocoapods-privacy.}
   spec.summary       = %q{A longer description of cocoapods-privacy.}
-  spec.homepage      = 'https://github.com/ymoyao/cocoapods-privacy'
+  spec.homepage      = 'https://github.com/miniclip/cocoapods-privacy'
   spec.license       = 'MIT'
 
   spec.required_ruby_version = Gem::Requirement.new(">= 2.7.0")
