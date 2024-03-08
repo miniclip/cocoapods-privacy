@@ -1,46 +1,62 @@
-# cocoapods-privacy
+# CocoaPods Privacy Plugin
 
-Apple 2024 will review the App's privacy list in the spring, and any apps that don't submit a privacy list may be called back. For now, the privacy list is broken down by component, to facilitate the maintenance of component privacy, cocoapods-privacy is developed for management.
-[Click to view details on Apple](https://developer.apple.com/documentation/bundleresources/privacy_manifest_files)
+In spring 2024, Apple will review apps' privacy practices, requiring all apps to submit a privacy manifest. Apps failing to provide this information may face removal. To simplify the management of privacy compliance, particularly for components within an app, the `cocoapods-privacy` plugin has been developed. For detailed information on Apple's privacy requirements, visit [Apple's official documentation](https://developer.apple.com/documentation/bundleresources/privacy_manifest_files).
 
 ## Installation
-```
+
+To install `cocoapods-privacy`, run the following command:
+
+```shell
 $ gem install cocoapods-privacy
 ```
 
 ## Usage
-#### init
-First of all, you must set a json config to cocoapods-privacy, this is a defalut config.json
-```
+
+### Initialization
+
+Initially, you must provide a JSON configuration to `cocoapods-privacy`. Below is how to set a default configuration:
+
+```shell
 $ pod privacy config https://raw.githubusercontent.com/ymoyao/cocoapods-privacy/main/resources/config.json
 ```
 
-There has 3 keys in defalut config, you should custom it!
-* source.white.list : a white list of source, defalut is empty, so, you should add you self component sources, and it work in command 'pod privacy install' or 'pod install --privacy', will search white list for NSPrivacyAccessedAPITypes.
-* source.black.list : a black list of source, defalut is empty, it work in command 'pod privacy install' or 'pod install --privacy'.
-* api.template.url : its required, a template for search NSPrivacyAccessedAPITypes
+The default configuration includes three keys that you may customize:
+
+- `source.white.list`: A whitelist of sources. By default, this is empty. You should add your own component sources. This list is used by the `pod privacy install` or `pod install --privacy` commands to search for `NSPrivacyAccessedAPITypes`.
+- `source.black.list`: A blacklist of sources, also empty by default. It functions similarly to the whitelist.
+- `api.template.url`: A required field specifying a template URL for searching `NSPrivacyAccessedAPITypes`.
+
+Example configuration:
+
+```json
+"source.white.list": ["yourserver.com"],
+"source.black.list": ["github.com"],
+"api.template.url": "https://raw.githubusercontent.com/miniclip/cocoapods-privacy/main/resources/NSPrivacyAccessedAPITypes.plist"
 ```
-"source.white.list": ["replace me with yourserver"], 
-"source.black.list": ["replace me such as github.com"],
-"api.template.url": "https://raw.githubusercontent.com/ymoyao/cocoapods-privacy/main/resources/NSPrivacyAccessedAPITypes.plist"
-```
-After custom,you can set local config like this
-```
+
+After customizing, you can set a local configuration like this:
+
+```shell
 $ pod privacy config /yourfilepath/config.json
 ```
 
-#### To Component
-```
+### Applying to a Component
+
+Use the following command to generate a privacy file for a component:
+
+```shell
 $ pod privacy spec [podspec_file_path]
 ```
-This command will auto create privacy file, and search the path of podspec' source_files' define relate to NSPrivacyAccessedAPITypes, finaly, write to PrivacyInfo.xcprivacy file.
-if your component has much subspec,  all subspec that define ‘source_files’ will create PrivacyInfo.xcprivacy, and auto modify .podspec link .xcprivacy to 'resource_bundle' key.
-For example
-* origin podspec
 
-```
+This command automatically creates a privacy file, searches for `source_files` paths related to `NSPrivacyAccessedAPITypes` in the podspec, and writes the result to `PrivacyInfo.xcprivacy`. If a component has multiple subspecs, each defined `source_files` will result in its own `PrivacyInfo.xcprivacy`, and the `.podspec` file will be updated to link the `.xcprivacy` file under the `resource_bundle` key.
+
+Example before and after the command:
+
+**Before:**
+
+```ruby
 Pod::Spec.new do |s|
-  s.name             = 'Demo'
+  s.name         = 'Demo'
   ...
   s.source_files = 'xxxx'
   s.subspec 'idfa' do |sp|
@@ -49,40 +65,41 @@ Pod::Spec.new do |s|
   s.subspec 'noidfa' do |sp|
   end
 end
-
 ```
 
-* podspec after commad  👇👇👇👇👇👇
-```
+**After:**
+
+```ruby
 Pod::Spec.new do |s|
   s.name             = 'Demo'
   ...
-  s.source_files = 'xxxx'
-  s.resource_bundle = {"Demo.privacy"=>"Pod/Privacy/Demo/PrivacyInfo.xcprivacy"}
+  s.source_files     = 'xxxx'
+  s.resource_bundle  = {"Demo.privacy" => "Pod/Privacy/Demo/PrivacyInfo.xcprivacy"}
   s.subspec 'idfa' do |sp|
-      sp.source_files = 'xxxxx'
-      sp.resource_bundle = {"Demo.idfa.privacy"=>"Pod/Privacy/Demo.idfa/PrivacyInfo.xcprivacy"}
+      sp.source_files     = 'xxxxx'
+      sp.resource_bundle  = {"Demo.idfa.privacy" => "Pod/Privacy/Demo.idfa/PrivacyInfo.xcprivacy"}
   end
   s.subspec 'noidfa' do |sp|
   end
 end
 ```
-<img width="961" alt="截屏2024-02-02 11 23 21" src="https://github.com/ymoyao/cocoapods-privacy/assets/13619221/a6678c8e-c4aa-4f7d-8881-657c6d703657">
 
+### Applying to a Project
 
-    
-#### To Project
-```
+To integrate privacy information into your project, use one of the following commands:
+
+```shell
 $ pod install --privacy
+```
+
 or
+
+```shell
 $ pod privacy install
 ```
-<img width="298" alt="截屏2024-02-02 10 59 59" src="https://github.com/ymoyao/cocoapods-privacy/assets/13619221/c6f10e36-0f62-497a-93d4-f8b336dc8df4">
 
-After command, a PrivacyInfo.xcprivacy will create to you project Resources if empty. and it will search component that configuration files allow and do not have their own privacy manifest file.
+This process will generate a `PrivacyInfo.xcprivacy` file in your project resources if none exists and will search for components that comply with the configuration files but do not have their own privacy manifest file.
 
 ## Notice
-The plugin is focus on NSPrivacyAccessedAPITypes and automatically search and create workflow.
-you should manager NSPrivacyCollectedDataTypes by yourself！
-    
 
+The `cocoapods-privacy` plugin is focused on managing `NSPrivacyAccessedAPITypes`. It automates the search and creation process for these types. However, you must manage `NSPrivacyCollectedDataTypes` independently.
